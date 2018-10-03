@@ -62,8 +62,8 @@ def custom_exc(ipython, shell, etype, evalue, tb, tb_offset=None):
                     last_name = custom_exc.last_name
                     if ipython.ask_yes_no(pre + "Attempt to pip-install {}? (Y/n)"
                                                 .format(last_name)):
-                        if __import__("pip").main(["install", last_name]) != 0:
-                            raise pipUnsuccessfulException
+                        import sys,subprocess
+                        subprocess.check_call([sys.executable, '-m', 'pip', 'install', last_name])
                     else:
                         return
                     print(pre + "Installation completed successfully, importing...")
@@ -72,15 +72,10 @@ def custom_exc(ipython, shell, etype, evalue, tb, tb_offset=None):
                         print(pre + "Imported referenced module {}".format(last_name))
                     except:
                         print(pre + "{} isn't a module".format(last_name))
-                except pipUnsuccessfulException:
+                except CalledProcessError:
                     print(pre + "Installation with pip failed")
-
-                except AttributeError:
-                    print(pre + "No module to install")
-
-                except ImportError:
-                    print(pre + "pip not found")
-                return
+                    return
+                
 
         # Import the module
         ipython.run_code("import {}".format(name))
@@ -89,6 +84,7 @@ def custom_exc(ipython, shell, etype, evalue, tb, tb_offset=None):
     except Exception as e:
         print(pre + ("Attempted to import {!r}"
                      "but an exception occured".format(name)))
+        return 
 
     try:
         # Run the failed line again
